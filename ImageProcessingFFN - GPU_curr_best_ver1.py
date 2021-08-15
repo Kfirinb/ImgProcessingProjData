@@ -1,5 +1,4 @@
 import itertools
-
 from torchvision import datasets
 import math
 import sklearn.manifold as s
@@ -17,14 +16,13 @@ import torch.nn.functional as F
 import os
 import matplotlib.pyplot as plt
 
-
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 seed = 1
 torch.manual_seed(seed)
 
 # hyper params:
 learning_rate = 0.6
-epochs_num = 2
+epochs_num = 25
 BATCH_SIZE = 1
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -57,10 +55,7 @@ def train_val_loss_accuracy_graphs(tr_accuracy,val_accuracy,tr_loss, val_loss,ep
 class Encoder(nn.Module):
     def __init__(self, latent_dims):
         super(Encoder, self).__init__()
-        #self.linear1 = nn.Linear(122500, 950)
-        #self.linear1 = nn.Linear(32400, 5000)
         self.linear1 = nn.Linear(32400, 950)
-        #self.linear2 = nn.Linear(5000, 1000)
         self.linear2 = nn.Linear(950, 920)
         #self.linear3 = nn.Linear(1000, latent_dims)
         self.linear3 = nn.Linear(920, latent_dims)
@@ -280,8 +275,7 @@ class binaryClassification(nn.Module):
         x = F.leaky_relu_(self.layer_2(x))
         x = F.leaky_relu_(self.layer_out(x))
         return x
-
-
+    
 # accuracy calculation
 def binary_acc(y_pred, y_test):
     y_pred_tag = torch.round(torch.sigmoid(y_pred))
@@ -299,7 +293,6 @@ def tensor_to_PIL(tensor):
     image = image.squeeze(0)
     image = unloader(image)
     return image
-
 
 ##Prints pretty confusion metric with normalization option
 def plot_confusion_matrix(cm, classes,normalize=False,title='Confusion matrix',cmap=plt.cm.Blues):
@@ -331,8 +324,6 @@ def plot_confusion_matrix(cm, classes,normalize=False,title='Confusion matrix',c
 
 def main():
     # prior processing the images:
-    #transform = transforms.Compose([transforms.CenterCrop((350, 350)), transforms.Grayscale(1), transforms.ToTensor()])
-    #transform = transforms.Compose([transforms.Resize((180, 180)), transforms.ToTensor(),transforms.Normalize((0.5,0.5,0.5),(0.5,0.5,0.5)),transforms.Grayscale(1)])
     transform = transforms.Compose([transforms.Resize((180, 180)), transforms.Grayscale(1), transforms.ToTensor()])
     root = "./binary_cropped_miroring_augmentation"
 
@@ -342,15 +333,6 @@ def main():
     # split data, 99% goes to train, 0.1% to validation:
     traindata, valdata, = random_split(dataset, [ceil(0.99 * len(dataset)), floor(0.01 * len(dataset))])  # Ori
 
-    """
-    sum = len(dataset)
-    a = ceil(0.8 * len(dataset))
-    b = floor(0.2 * len(dataset))
-    print ("a+b = ",(a+b),"a=",a,"b=",b,"sum = ", sum)
-    exit(0)
-    
-    traindata, valdata, = random_split(dataset, [floor(0.2 * len(dataset)), ceil(0.8 * len(dataset))])  # checking
-    """
     # Load data in batches, and shuffling the data before the training:
     trainloader = DataLoader(traindata, batch_size = BATCH_SIZE, shuffle = True)
     val_loader = DataLoader(valdata, batch_size = BATCH_SIZE, shuffle = True)
@@ -379,8 +361,7 @@ def main():
     ecn_samp_output, labels = encoder_output(autoencoder, traindata, 200)
 
     # get encoder output with all training data pictures:
-    #########3#ecn_samp_output_sec_nn, labels_sec_nn = encoder_output(autoencoder, traindata, 3500)
-    ecn_samp_output_sec_nn, labels_sec_nn = encoder_output(autoencoder, traindata, 1700) ##########@@@@@@@@@@@@@@@@@22
+    ecn_samp_output_sec_nn, labels_sec_nn = encoder_output(autoencoder, traindata, 1700)
 
     # precessing encoder output to classification algorithm
     ecn_samp_output_sec_nn = torch.cat(ecn_samp_output_sec_nn)
@@ -401,6 +382,7 @@ def main():
 
     # Training Binary Classification:
     # train & test data split to train data and labels
+    #added lists to plot learning accuracy & loss VS validation
     tr_data = []
     val_data = []
     tst_data = []
@@ -417,11 +399,6 @@ def main():
         tst_data.append(data_classifi[len(data_classifi) - j - 1])  # test data
         y_test.append(labels_classifi[len(labels_classifi) - j - 1])  # test labels
 
-    # we didnt use that at the end, optional:
-    # standartization input:
-    # scaler = StandardScaler()
-    # X_train = scaler.fit_transform(tr_data)
-    # X_test = scaler.transform(tst_data)
     X_train = tr_data
     X_test = tst_data
 
@@ -450,7 +427,7 @@ def main():
     bc_epoch_num = []
 
     # train data:
-    for e in range(1, 15):  # epochs_num = 15
+    for e in range(1, 8):  # epochs_num = 15
         model.train()
         epoch_loss = 0
         epoch_acc = 0
