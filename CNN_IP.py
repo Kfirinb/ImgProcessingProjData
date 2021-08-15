@@ -358,31 +358,6 @@ if __name__ == '__main__':
     # load image with labels - which image came from each folders
     dataset = datasets.ImageFolder(root=root, transform=transform)
 
-    #datatsne = torch.utils.data.DataLoader(dataset, shuffle=True)
-
-
-
-    '''
-    aa = 0
-    bb = 0
-    cc = 0
-    dd = 0
-    for i in lab_lst:
-        if i == 0:
-            aa +=1
-        elif i == 1:
-            bb+=1
-        elif i == 2:
-            cc +=1
-        elif i == 3:
-            dd+=1
-        else:
-            print ("strange num:",i)
-    print(aa,bb,cc,dd)
-    #exit(1)
-   '''
-
-
     # load data
     trainData = datasets.ImageFolder(root=root+"/train", transform=transform)
     valData = datasets.ImageFolder(root=root+"/valid", transform=transform)
